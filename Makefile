@@ -96,12 +96,12 @@ debug:
 
 
 test:
-	@./scripts/testSyslog.sh $(DOCKER_TAG)-$(ARCH)
+	@./scripts/testOmada.sh $(DOCKER_TAG)-$(ARCH)
 
 
 test_all:
 	@$(foreach ARCH,$(ARCHS), \
-		./scripts/testSyslog.sh $(DOCKER_TAG)-$(ARCH); \
+		./scripts/testOmada.sh $(DOCKER_TAG)-$(ARCH); \
 	)
 
 

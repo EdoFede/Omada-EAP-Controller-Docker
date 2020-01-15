@@ -14,13 +14,12 @@ RUN	export LC_ALL=C && \
 	apt-get install -y --no-install-recommends \
 		apt-utils && \
 	apt-get install -y --no-install-recommends \
-		# apt-transport-https \
 		ca-certificates \
 		bash \
 		curl \
 		vim \
 		libcap-dev \
-		openjdk-8-jdk \
+		openjdk-8-jre-headless \
 		jsvc \
 		net-tools && \
 	# Install mongodb from ext repository
@@ -31,12 +30,11 @@ RUN	export LC_ALL=C && \
 		mongodb && \
 	# Clean apt
 	apt-get clean && \
-	rm -rf /tmp/* /var/tmp/* /var/lib/apt/lists/*
-
-# Install and configure Omada EAP Controller
-RUN curl -o /tmp/Omada.tar.gz $OMADA_DOWNLOAD_LINK && \
-	tar -zxvf /tmp/Omada.tar.gz -C /tmp/
-RUN	rm /tmp/Omada.tar.gz && \
+	rm -rf /tmp/* /var/tmp/* /var/lib/apt/lists/* && \
+	# Install and configure Omada EAP Controller
+	curl -o /tmp/Omada.tar.gz $OMADA_DOWNLOAD_LINK && \
+	tar -zxvf /tmp/Omada.tar.gz -C /tmp/ && \
+	rm /tmp/Omada.tar.gz && \
 	mv $(find /tmp -maxdepth 1 -type d -name Omada*) /tmp/Omada && \
 	mkdir -p /opt/EAP-Controller && \
 	mkdir -p /opt/EAP-Controller/bin && \
@@ -97,4 +95,4 @@ LABEL 	maintainer="Edoardo Federici <hello@edoardofederici.com>" \
 		org.label-schema.build-date=$BUILD_DATE \
 		org.label-schema.vcs-url="https://github.com/EdoFede/Omada-EAP-Controller" \
 		org.label-schema.vcs-ref=$VCS_REF \
-		org.label-schema.docker.cmd="docker create --name Omada-EAP-Controller edofede/omada-eap-controller:latest"
+		org.label-schema.docker.cmd="docker create --name Omada-EAP-Controller --env TZ=Europe/Rome --network host --volume omada_data:/opt/EAP-Controller/data --volume omada_logs:/opt/EAP-Controller/logs --volume omada_work:/opt/EAP-Controller/work edofede/omada-eap-controller:latest"
