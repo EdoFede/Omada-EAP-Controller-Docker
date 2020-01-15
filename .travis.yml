@@ -1,0 +1,35 @@
+sudo: required
+language: bash
+services:
+  - docker
+
+before_install:
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  - sudo apt-get update
+  - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
+
+install:
+  - ./scripts/travisDockerSetup.sh
+  - docker pull multiarch/qemu-user-static:register
+  - docker run --rm --privileged multiarch/qemu-user-static:register --reset
+
+script: 
+  - make build BRANCH=$TRAVIS_BRANCH GIT_COMMIT=$(git rev-parse --short $TRAVIS_COMMIT) GITHUB_TOKEN=$GITHUB_TOKEN
+  - make test_all BRANCH=$TRAVIS_BRANCH
+
+after_script: docker images
+
+before_deploy:
+  - echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin
+
+deploy:
+  - provider: script
+    script: make docker_push BRANCH=$TRAVIS_BRANCH
+    on:
+      branch: master
+  - provider: script
+    script: make docker_push_latest BRANCH=$TRAVIS_BRANCH
+    on:
+      tags: true
+      

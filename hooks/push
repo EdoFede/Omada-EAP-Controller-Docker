@@ -1,0 +1,6 @@
+#!/bin/bash
+# hooks/push
+# https://docs.docker.com/docker-cloud/builds/advanced/
+
+echo "### Custom push hook running... ###"
+echo "Skipping push (done from Travis-CI)"

@@ -1,0 +1,4 @@
+hooks/* linguist-vendored
+imageFiles/* linguist-vendored
+scripts/* linguist-vendored
+Makefile linguist-vendored
