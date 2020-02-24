@@ -4,14 +4,10 @@ source scripts/multiArchMatrix.sh
 source scripts/logger.sh
 
 showHelp() {
-	echo "Usage: $0 -i <Image name> -t <Tag name> -a <Target architecture> -b <Baseimage branch> -v <version> -r <VCS reference> -g <GitHub auth token>"
+	echo "Usage: $0 -i <Image name> -t <Tag name> -a <Target architecture> -b <Baseimage branch> -l -v <version> -r <VCS reference> -g <GitHub auth token>"
 }
 
-cleanup() {
-	rm -rf build_tmp/
-}
-
-while getopts :hi:t:a:b:v:r:g: opt; do
+while getopts :hi:t:a:b:l:v:r:g: opt; do
 	case ${opt} in
 		h)
 			showHelp
@@ -28,6 +24,9 @@ while getopts :hi:t:a:b:v:r:g: opt; do
 			;;
 		b)
 			BASEIMAGE_BRANCH=$OPTARG
+			;;
+		l)
+			TAG_LATEST=$OPTARG
 			;;
 		v)
 			VERSION=$OPTARG
@@ -60,6 +59,11 @@ echo ""
 logTitle "Build parameters"
 logSubTitle "Docker image: $DOCKER_IMAGE"
 logSubTitle "Docker tag: $DOCKER_TAG"
+if [ $TAG_LATEST == "1" ]; then
+	logSubTitle "Tag as latest: Yes"
+else
+	logSubTitle "Tag as latest: No"
+fi
 logSubTitle "Architecture: $ARCH"
 logSubTitle "Baseimage branch: $BASEIMAGE_BRANCH"
 logSubTitle "Image version: $VERSION"
@@ -68,74 +72,96 @@ echo ""
 
 BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 
-
-logTitle "Setting up multiarch build environment"
-cleanup
-mkdir -p build_tmp/qemu
-
-if [ -z GITHUB_TOKEN ] || [ "$GITHUB_TOKEN" == "NONE" ]; then
-	QEMU_RELEASE=$(curl -sS --connect-timeout 5 --max-time 10 --retry 5 --retry-delay 1 --retry-max-time 60 "https://api.github.com/repos/multiarch/qemu-user-static/releases/latest" |grep '"tag_name":' |sed -E 's/.*"([^"]+)".*/\1/')
-else
-	QEMU_RELEASE=$(curl -u EdoFede:$GITHUB_TOKEN -sS --connect-timeout 5 --max-time 10 --retry 5 --retry-delay 1 --retry-max-time 60 "https://api.github.com/repos/multiarch/qemu-user-static/releases/latest" |grep '"tag_name":' |sed -E 's/.*"([^"]+)".*/\1/')	
-fi
-
-if [ -z QEMU_RELEASE ]; then
-	QEMU_RELEASE="v4.2.0-2"
-fi
-
+logTitle "Reading multiarch build settings"
+PLATFORM=""
 for i in ${!ARCHS[@]}; do
-	if [ "${ARCHS[i]}" == "$ARCH" ]; then
-		QEMU_ARCH=${QEMU_ARCHS[i]}
-		break
+	if [ -z "$ARCH" ]; then
+		PLATFORM+="linux/"
+		PLATFORM+=${PLATFORMS[i]}
+		PLATFORM+=","
+		if [ "${TEST_ENABLED[i]}" == "1" ]; then
+			TEST_ENABLE="true"
+		else
+			TEST_ENABLE="false"
+		fi
+
+		logNormal "Arch: ${ARCHS[i]}"
+		logDetail "Docker arch: ${DOCKER_ARCHS[i]}"
+		logDetail "Variant: ${ARCH_VARIANTS[i]}"
+		logDetail "Qemu arch name: ${QEMU_ARCHS[i]}"
+		logDetail "Docker platform name: linux/${PLATFORMS[i]}"
+		[ "${TEST_ENABLED[i]}" == "1" ] && TEST_ENABLE="true" || TEST_ENABLE="false"
+		logDetail "Testing enabled: $TEST_ENABLE"
+
+	else
+		if [ "${ARCHS[i]}" == "$ARCH" ]; then
+			PLATFORM+="linux/"
+			PLATFORM+=${PLATFORMS[i]}
+			PLATFORM+=","
+			logNormal "Arch: $ARCH"
+			logDetail "Docker arch: ${DOCKER_ARCHS[i]}"
+			logDetail "Variant: ${ARCH_VARIANTS[i]}"
+			logDetail "Qemu arch name: ${QEMU_ARCHS[i]}"
+			logDetail "Docker platform name: linux/${PLATFORMS[i]}"
+			if [ "${TEST_ENABLED[i]}" == "1" ]; then
+				TEST_ENABLE="true"
+			else
+				TEST_ENABLE="false"
+			fi
+			logDetail "Testing enabled: $TEST_ENABLE"
+			break
+		fi
 	fi
 done
-
-if [ "$QEMU_ARCH" != "NONE" ]; then
-	curl -sS -L \
-		--connect-timeout 5 \
-		--max-time 10 \
-		--retry 5 \
-		--retry-delay 0 \
-		--retry-max-time 60 \
-		https://github.com/multiarch/qemu-user-static/releases/download/$QEMU_RELEASE/qemu-$QEMU_ARCH-static.tar.gz \
-		-o build_tmp/qemu-$QEMU_ARCH-static.tar.gz && \
-	tar zxvf \
-		build_tmp/qemu-*-static.tar.gz \
-		-C build_tmp/qemu/
-
-	if [ $? != 0 ]; then
-		logError "Download or extraction failed"
-		cleanup
-		exit 2
-	fi
-fi
+PLATFORM=${PLATFORM%?};
+# PLATFORM=$(echo "$PLATFORM" |sed 's/.$//')
+logNormal "Build platform list: $PLATFORM"
 logNormal "Done"
 
+echo ""
+logTitle "Checking/cleaning buildx environment"
+docker buildx rm mybuilder
+docker buildx create --driver-opt network=host --use --name mybuilder
+docker buildx ls
+docker buildx inspect --bootstrap
+logNormal "Done"
 
+echo ""
 logTitle "Start building"
-cmdBuilt="docker build"
-cmdBuilt+=" --build-arg BUILD_DATE=$BUILD_DATE"
-if [ ! -z $ARCH ]; then
-	cmdBuilt+=" --build-arg ARCH=$ARCH"
-fi
+cmdBuild="docker buildx build"
+cmdBuild+=" --platform $PLATFORM"
+cmdBuild+=" --build-arg BUILD_DATE=$BUILD_DATE"
 if [ ! -z $BASEIMAGE_BRANCH ]; then
-	cmdBuilt+=" --build-arg BASEIMAGE_BRANCH=$BASEIMAGE_BRANCH"
+	cmdBuild+=" --build-arg BASEIMAGE_BRANCH=$BASEIMAGE_BRANCH"
 fi
 if [ ! -z $VERSION ]; then
-	cmdBuilt+=" --build-arg VERSION=$VERSION"
+	cmdBuild+=" --build-arg VERSION=$VERSION"
 fi
 if [ ! -z $VCS_REF ]; then
-	cmdBuilt+=" --build-arg VCS_REF=$VCS_REF"
+	cmdBuild+=" --build-arg VCS_REF=$VCS_REF"
 fi
-cmdBuilt+=" --tag $DOCKER_IMAGE:$DOCKER_TAG-$ARCH"
-cmdBuilt+=" ."
+cmdBuild+=" --tag $DOCKER_IMAGE:$DOCKER_TAG"
+if [ $TAG_LATEST == "1" ]; then
+	cmdBuild+=" --tag $DOCKER_IMAGE:latest"
+fi
+cmdBuild+=" --push"
+cmdBuild+=" ."
 
-eval $cmdBuilt
+logNormal "Build command:"
+logDetail "$cmdBuild"
+eval $cmdBuild
 if [ $? != 0 ]; then
 	logError "Build failed"
-	cleanup
 	exit 3
 fi
 
 logNormal "Build done"
-cleanup
+
+echo ""
+logTitle "Inspecting images just built"
+docker buildx imagetools inspect $DOCKER_IMAGE:$DOCKER_TAG
+if [ $TAG_LATEST == "1" ]; then
+	echo ""
+	docker buildx imagetools inspect $DOCKER_IMAGE:latest
+fi
+logNormal "Inspection done"

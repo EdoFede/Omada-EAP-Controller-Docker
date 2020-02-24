@@ -8,11 +8,13 @@ before_install:
   - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
   - sudo apt-get update
   - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
+  - ./scripts/travisDockerSetup.sh
 
 install:
-  - ./scripts/travisDockerSetup.sh
-  - docker pull multiarch/qemu-user-static:register
-  - docker run --rm --privileged multiarch/qemu-user-static:register --reset
+  - docker pull multiarch/qemu-user-static
+  - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+  - docker run -d -p 5000:5000 --restart always --name localReg registry:2
+  - docker ps -a
 
 script: 
   - make build BRANCH=$TRAVIS_BRANCH GIT_COMMIT=$(git rev-parse --short $TRAVIS_COMMIT) GITHUB_TOKEN=$GITHUB_TOKEN
@@ -25,11 +27,11 @@ before_deploy:
 
 deploy:
   - provider: script
-    script: make docker_push BRANCH=$TRAVIS_BRANCH
+    script: make build_push BRANCH=$TRAVIS_BRANCH GIT_COMMIT=$(git rev-parse --short $TRAVIS_COMMIT) GITHUB_TOKEN=$GITHUB_TOKEN
     on:
       branch: master
   - provider: script
-    script: make docker_push_latest BRANCH=$TRAVIS_BRANCH
+    script: make build_push BRANCH=$TRAVIS_BRANCH TAG_LATEST=1 GIT_COMMIT=$(git rev-parse --short $TRAVIS_COMMIT) GITHUB_TOKEN=$GITHUB_TOKEN
     on:
       tags: true
       

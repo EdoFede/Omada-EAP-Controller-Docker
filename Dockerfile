@@ -1,10 +1,9 @@
-ARG ARCH
 ARG BASEIMAGE_BRANCH
-FROM $ARCH/ubuntu:$BASEIMAGE_BRANCH
+FROM ubuntu:$BASEIMAGE_BRANCH
 
-COPY build_tmp/qemu/ /usr/bin/
+ARG OMADA_DOWNLOAD_LINK=https://static.tp-link.com/2020/202001/20200116/Omada_Controller_v3.2.6_linux_x64.tar.gz
 
-ARG OMADA_DOWNLOAD_LINK=https://static.tp-link.com/2019/201911/20191108/Omada_Controller_v3.2.4_linux_x64.tar.gz
+COPY imageFiles/ /
 
 # Install required software
 RUN	export LC_ALL=C && \
@@ -22,12 +21,10 @@ RUN	export LC_ALL=C && \
 		openjdk-8-jre-headless \
 		jsvc \
 		net-tools && \
+	ln -s /usr/lib/jvm/java-8-openjdk-* /usr/lib/jvm/default-java
 	# Install mongodb from ext repository
-	echo "deb http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/4.0 multiverse" > /etc/apt/sources.list.d/mongodb-org-4.0.list && \
-	apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv E52529D4 && \
-	apt-get update && \
-	apt-get install -y --no-install-recommends \
-		mongodb && \
+# RUN	/opt/scripts/installMongodb.sh && \
+RUN	apt-get install -y --no-install-recommends mongodb && \
 	# Clean apt
 	apt-get clean && \
 	rm -rf /tmp/* /var/tmp/* /var/lib/apt/lists/* && \
@@ -49,8 +46,7 @@ RUN	export LC_ALL=C && \
 	mv /tmp/Omada/webapps /opt/EAP-Controller/ && \
 	ln -s /usr/bin/mongod /opt/EAP-Controller/bin/mongod && \
 	# Add OS user and group and fix permissions
-	groupadd omada && \
-	useradd -g omada -d /opt/EAP-Controller omada && \
+	useradd -r -M -d /opt/EAP-Controller -c "EAP Controller user" -s /bin/false omada && \
 	chgrp -R omada /opt/EAP-Controller && \
 	chown -R omada /opt/EAP-Controller/data /opt/EAP-Controller/keystore /opt/EAP-Controller/properties /opt/EAP-Controller/logs /opt/EAP-Controller/work && \
 	find /opt/EAP-Controller/ -type d -exec chmod 755 {} \; && \
@@ -61,7 +57,7 @@ USER omada
 WORKDIR /opt/EAP-Controller
 
 CMD java \
-	-client \
+#	-client \
 	-Xms128m \
 	-Xmx768m \
 	-XX:MinHeapFreeRatio=30 \
