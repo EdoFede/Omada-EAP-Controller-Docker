@@ -72,7 +72,7 @@ for i in ${!PLATFORMS[@]}; do
 	
 	
 	if [ "${TEST_ENABLED[i]}" == "0" ]; then
-		logNormal "Skipping HTTP tests for this architecture"
+		logNormal "Skipping tests for this architecture"
 	else
 
 		startOk=0
