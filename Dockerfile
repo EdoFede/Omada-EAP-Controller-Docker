@@ -1,7 +1,7 @@
 ARG BASEIMAGE_BRANCH
 FROM ubuntu:$BASEIMAGE_BRANCH
 
-ARG OMADA_DOWNLOAD_LINK=https://static.tp-link.com/2020/202001/20200116/Omada_Controller_v3.2.6_linux_x64.tar.gz
+ARG OMADA_DOWNLOAD_LINK=https://static.tp-link.com/2020/202004/20200420/Omada_Controller_v3.2.10_linux_x64.tar.gz
 
 COPY imageFiles/ /
 
@@ -46,7 +46,7 @@ RUN	apt-get install -y --no-install-recommends mongodb && \
 	mv /tmp/Omada/webapps /opt/EAP-Controller/ && \
 	ln -s /usr/bin/mongod /opt/EAP-Controller/bin/mongod && \
 	# Add OS user and group and fix permissions
-	useradd -r -M -d /opt/EAP-Controller -c "EAP Controller user" -s /bin/false omada && \
+	useradd -r -M -u 50124 -d /opt/EAP-Controller -c "EAP Controller user" -s /bin/false omada && \
 	chgrp -R omada /opt/EAP-Controller && \
 	chown -R omada /opt/EAP-Controller/data /opt/EAP-Controller/keystore /opt/EAP-Controller/properties /opt/EAP-Controller/logs /opt/EAP-Controller/work && \
 	find /opt/EAP-Controller/ -type d -exec chmod 755 {} \; && \
