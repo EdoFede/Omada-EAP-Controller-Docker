@@ -1,7 +1,7 @@
 ARG BASEIMAGE_BRANCH
 FROM ubuntu:$BASEIMAGE_BRANCH
 
-ARG OMADA_DOWNLOAD_LINK=https://static.tp-link.com/2020/202004/20200420/Omada_Controller_v3.2.10_linux_x64.tar.gz
+ARG OMADA_DOWNLOAD_LINK=https://static.tp-link.com/2020/202008/20200805/Omada_SDN_Controller_v4.1.5_linux_x64.tar.gz
 
 COPY imageFiles/ /
 
@@ -17,14 +17,15 @@ RUN	export LC_ALL=C && \
 		bash \
 		curl \
 		vim \
-		libcap-dev \
+		libcap-dev && \
+	curl https://www.mongodb.org/static/pgp/server-3.6.asc | apt-key add - && \
+	echo "deb http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.6 multiverse" > /etc/apt/sources.list.d/mongodb-org.list && \
+	apt-get update && \
+	apt-get install -y --no-install-recommends \
 		openjdk-8-jre-headless \
-		jsvc \
+		mongodb-org \
 		net-tools && \
-	ln -s /usr/lib/jvm/java-8-openjdk-* /usr/lib/jvm/default-java
-	# Install mongodb from ext repository
-# RUN	/opt/scripts/installMongodb.sh && \
-RUN	apt-get install -y --no-install-recommends mongodb && \
+	ln -s /usr/lib/jvm/java-8-openjdk-* /usr/lib/jvm/default-java && \
 	# Clean apt
 	apt-get clean && \
 	rm -rf /tmp/* /var/tmp/* /var/lib/apt/lists/* && \
@@ -34,44 +35,37 @@ RUN	apt-get install -y --no-install-recommends mongodb && \
 	rm /tmp/Omada.tar.gz && \
 	mv $(find /tmp -maxdepth 1 -type d -name Omada*) /tmp/Omada && \
 	mkdir -p /opt/EAP-Controller && \
-	mkdir -p /opt/EAP-Controller/bin && \
-	mkdir -p /opt/EAP-Controller/logs && \
-	mkdir -p /opt/EAP-Controller/work && \
 	# Build program dir
-	mv /tmp/Omada/readme.txt /opt/EAP-Controller/ && \
-	mv /tmp/Omada/data /opt/EAP-Controller/ && \
-	mv /tmp/Omada/keystore /opt/EAP-Controller/ && \
-	mv /tmp/Omada/lib /opt/EAP-Controller/ && \
-	mv /tmp/Omada/properties /opt/EAP-Controller/ && \
-	mv /tmp/Omada/webapps /opt/EAP-Controller/ && \
+	mv /tmp/Omada/* /opt/EAP-Controller/ && \
 	ln -s /usr/bin/mongod /opt/EAP-Controller/bin/mongod && \
+	mkdir /opt/EAP-Controller/logs && \
+	mkdir /opt/EAP-Controller/work && \
 	# Add OS user and group and fix permissions
 	useradd -r -M -u 50124 -d /opt/EAP-Controller -c "EAP Controller user" -s /bin/false omada && \
 	chgrp -R omada /opt/EAP-Controller && \
-	chown -R omada /opt/EAP-Controller/data /opt/EAP-Controller/keystore /opt/EAP-Controller/properties /opt/EAP-Controller/logs /opt/EAP-Controller/work && \
+	chown -R omada /opt/EAP-Controller && \
 	find /opt/EAP-Controller/ -type d -exec chmod 755 {} \; && \
-	find /opt/EAP-Controller/ -type f -exec chmod 644 {} \; && \
-	chmod 600 /opt/EAP-Controller/keystore/*
+	find /opt/EAP-Controller/ -type f -exec chmod 644 {} \;
 
 USER omada
-WORKDIR /opt/EAP-Controller
+WORKDIR /opt/EAP-Controller/lib
 
 CMD java \
-#	-client \
+	-server \
 	-Xms128m \
-	-Xmx768m \
-	-XX:MinHeapFreeRatio=30 \
+	-Xmx1024m \
 	-XX:MaxHeapFreeRatio=60 \
+	-XX:MinHeapFreeRatio=30 \
 	-XX:+HeapDumpOnOutOfMemoryError \
 	-cp /usr/share/java/commons-daemon.jar:/opt/EAP-Controller/lib/* \
-	-Deap.home=/opt/EAP-Controller \
-	com.tp_link.eap.start.EapLinuxMain
+	# -Deap.home=/opt/EAP-Controller \
+	com.tplink.omada.start.OmadaLinuxMain
 
 HEALTHCHECK \
 	--start-period=120s \
 	--timeout=15s \
 	--interval=60s \
-	CMD curl --fail http://127.0.0.1:8088 || exit 1
+	CMD curl --fail http://127.0.0.1:8088/status || exit 1
 
 EXPOSE 8043/tcp 8088/tcp 27001/udp 27002/tcp 29810/udp 29811/tcp 29812/tcp 29813/tcp
 VOLUME ["/opt/EAP-Controller/data", "/opt/EAP-Controller/logs", "/opt/EAP-Controller/work"]

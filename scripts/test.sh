@@ -78,8 +78,9 @@ for i in ${!PLATFORMS[@]}; do
 		startOk=0
 		for i in {1..30}; do
 			echo -e ".\c"
-			log=$(docker logs $containerId 2>&1 |grep 'Omada Controller started')
-			if [ "$log" == "Omada Controller started" ]; then
+			# log=$(docker logs $containerId 2>&1 |grep 'Omada Controller started')
+			log=$(docker exec -ti $containerId cat ../logs/server.log |grep "Omada Controller started")
+			if [[ -n $log ]]; then
 				startOk=1;
 				break
 			fi
@@ -91,7 +92,8 @@ for i in ${!PLATFORMS[@]}; do
 		if [ $startOk == 0 ]; then
 			logError "Error: Omada controller is not starting"
 			logError "Logfile:"
-			logDetail "$(docker logs $containerId 2>&1)"
+			# logDetail "$(docker logs $containerId 2>&1)"
+			logDetail "$(docker exec -ti $containerId cat ../logs/server.log)"
 			logError "Aborting..."
 			docker stop $containerId
 			exit 1;
