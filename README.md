@@ -1,0 +1,2 @@
+# Omada-EAP-Controller-Docker
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/af75d9431b2942078b959375a8f5d299)](https://app.codacy.com/manual/EdoFede/Omada-EAP-Controller-Docker?utm_source=github.com&utm_medium=referral&utm_content=EdoFede/Omada-EAP-Controller-Docker&utm_campaign=Badge_Grade_Dashboard)
