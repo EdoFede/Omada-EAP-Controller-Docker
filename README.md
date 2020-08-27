@@ -60,13 +60,12 @@ To set a new timezone, simpy edit the container creation command, adapting the l
 ## Docker image details
 The image is based on Ubuntu linux and mainly consist of:
 
-* OpenJDK 8 (JRE headless)
-* MongoDB 3.6
-* [TP-Link Omada controller](https://www.tp-link.com/us/support/download/omada-software-controller/)
+* OpenJDK 8 (JRE headless)  
+* MongoDB 3.6  
+* [TP-Link Omada controller](https://www.tp-link.com/us/support/download/omada-software-controller/)  
 
 All components are automatically configured by the Docker image
  
-
 ## Support me
 I treat these free projects exactly like professional works and I'm glad to share it, with some of my knowledge, for free.
 
