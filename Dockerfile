@@ -56,7 +56,6 @@ CMD java \
 	-XX:MinHeapFreeRatio=30 \
 	-XX:+HeapDumpOnOutOfMemoryError \
 	-cp /usr/share/java/commons-daemon.jar:/opt/EAP-Controller/lib/* \
-	# -Deap.home=/opt/EAP-Controller \
 	com.tplink.omada.start.OmadaLinuxMain
 
 HEALTHCHECK \
@@ -83,4 +82,4 @@ LABEL 	maintainer="Edoardo Federici <hello@edoardofederici.com>" \
 		org.label-schema.build-date=$BUILD_DATE \
 		org.label-schema.vcs-url="https://github.com/EdoFede/Omada-EAP-Controller" \
 		org.label-schema.vcs-ref=$VCS_REF \
-		org.label-schema.docker.cmd="docker create --name Omada-EAP-Controller --env TZ=Europe/Rome --network host --volume omada_data:/opt/EAP-Controller/data --volume omada_logs:/opt/EAP-Controller/logs --volume omada_work:/opt/EAP-Controller/work edofede/omada-eap-controller:latest"
+		org.label-schema.docker.cmd="docker create --name Omada-EAP-Controller --restart unless-stopped --env TZ=Europe/Rome --network host --volume omada_data:/opt/EAP-Controller/data --volume omada_logs:/opt/EAP-Controller/logs --volume omada_work:/opt/EAP-Controller/work edofede/omada-eap-controller:latest"

@@ -102,17 +102,14 @@ for i in ${!PLATFORMS[@]}; do
 		
 		
 		logSubTitle "Checking Omada web server"
-		# log=$(curl -If -s --connect-timeout 5 --max-time 10 --retry 3 --retry-delay 1 --retry-max-time 30 http://localhost:$webPort 2>&1 |sed -n 1p)
-		# log=$(echo $log |sed 's/\Found.*/Found/')
-		# if [ "$log" != "HTTP/1.1 302 Found" ]; then
-		
 		log=$(curl -I -m 10 -o /dev/null -s -w %{http_code} http://localhost:$webPort/status)
 		if [ "$log" != "200" ]; then
 			logError "Error: web server is not responding properly"
 			logError "Check return:"
 			echo $log |cat -v
 			logError "Logfile:"
-			logDetail "$(docker logs $containerId 2>&1)"
+			# logDetail "$(docker logs $containerId 2>&1)"
+			logDetail "$(docker exec -ti $containerId cat ../logs/server.log)"
 			logError "HTTP response:"
 			logDetail "$(curl -v http://localhost:$webPort)"
 			logError "Aborting..."
