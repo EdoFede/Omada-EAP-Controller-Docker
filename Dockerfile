@@ -6,7 +6,7 @@ ARG OMADA_DOWNLOAD_LINK=https://static.tp-link.com/2020/202012/20201211/Omada_SD
 # Install required software
 RUN	export LC_ALL=C && \
 	export DEBIAN_FRONTEND=noninteractive && \
-	echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections && \
+#	echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections && \
 	apt-get update && \
 	apt-get install -y --no-install-recommends \
 		apt-utils && \
