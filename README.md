@@ -42,7 +42,7 @@ docker create --name $ContainerName \
 --volume omada_work:/opt/EAP-Controller/work \
 $ImageName:$ImageVersion
 
-docker start BaseImage
+docker start $ContainerName
 ```
 Then wait for the first bootstap (db creation) and access the Omada controller via the web interface:
 ```http
