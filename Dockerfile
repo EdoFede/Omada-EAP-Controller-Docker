@@ -1,7 +1,7 @@
 ARG BASEIMAGE_BRANCH
 FROM ubuntu:$BASEIMAGE_BRANCH
 
-ARG OMADA_DOWNLOAD_LINK=https://static.tp-link.com/2020/202012/20201211/Omada_SDN_Controller_v4.2.8_linux_x64.tar.gz
+ARG OMADA_DOWNLOAD_LINK=https://static.tp-link.com/upload/software/2021/202108/20210813/Omada_SDN_Controller_v4.4.4_linux_x64.tar.gz
 
 # Install required software
 RUN	export LC_ALL=C && \
@@ -64,7 +64,7 @@ HEALTHCHECK \
 	--interval=60s \
 	CMD curl --fail http://127.0.0.1:8088/status || exit 1
 
-EXPOSE 8043/tcp 8088/tcp 27001/udp 27002/tcp 29810/udp 29811/tcp 29812/tcp 29813/tcp
+EXPOSE 8043/tcp 8088/tcp 8843/tcp 27001/udp 27002/tcp 29810/udp 29811/tcp 29812/tcp 29813/tcp
 VOLUME ["/opt/EAP-Controller/data", "/opt/EAP-Controller/logs", "/opt/EAP-Controller/work"]
 
 
