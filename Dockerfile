@@ -18,6 +18,7 @@ RUN	export LC_ALL=C && \
 		libcap-dev && \
 	curl https://www.mongodb.org/static/pgp/server-3.6.asc | apt-key add - && \
 	echo "deb http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.6 multiverse" > /etc/apt/sources.list.d/mongodb-org.list && \
+	ln -s /bin/true /usr/local/bin/systemctl && \
 	apt-get update && \
 	apt-get install -y --no-install-recommends \
 		openjdk-8-jre-headless \
