@@ -1,7 +1,7 @@
 ARG BASEIMAGE_BRANCH
 FROM ubuntu:$BASEIMAGE_BRANCH
 
-ARG OMADA_DOWNLOAD_LINK=https://static.tp-link.com/upload/software/2021/202108/20210813/Omada_SDN_Controller_v4.4.4_linux_x64.tar.gz
+ARG OMADA_DOWNLOAD_LINK=https://static.tp-link.com/upload/software/2022/202211/20221121/Omada_SDN_Controller_v5.7.4_Linux_x64.tar.gz
 
 # Install required software
 RUN	export LC_ALL=C && \
